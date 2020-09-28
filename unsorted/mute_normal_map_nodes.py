@@ -496,7 +496,8 @@ def default_custom_nodes():
 
 @persistent
 def custom_normal_load(scn):
-    bpy.ops.zpy.mats_custom_normals(custom=True)
+    if bpy.ops.zpy.mats_custom_normals.poll():
+        bpy.ops.zpy.mats_custom_normals(custom=True)
 
 
 def register():

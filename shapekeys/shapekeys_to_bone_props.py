@@ -108,9 +108,11 @@ class DRIV_OT_shapes_to_bone(bpy.types.Operator):
         driver.type = 'AVERAGE'
 
         if 'var' in driver.variables:
-            variable = driver.variables['var'].targets[0]
+            var = driver.variables['var']
         else:
-            variable = driver.variables.new().targets[0]
+            var = driver.variables.new()
+        var.type = 'SINGLE_PROP'
+        variable = var.targets[0]
         variable.id_type = 'OBJECT'
         variable.id = bone.id_data
 

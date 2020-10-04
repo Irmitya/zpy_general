@@ -154,6 +154,22 @@ class SEQUENCER_PT_aspect_ratio(bpy.types.Panel):
         layout = self.layout
         layout.operator('zpy.sequencer_aspect_ratio', text="Set to Scene Aspect Ratio")
 
+        seq = act_strip(context)
+        scn = context.scene
+
+        if (seq.type == 'IMAGE'):
+            # Current element for the filename.
+            elem = seq.strip_elem_from_frame(scn.frame_current)
+        else:  # elif (seq.type == 'MOVIE'):
+            elem = seq.elements[0]
+
+        res = (scn.render.resolution_x, scn.render.resolution_y)
+        size = (elem.orig_width, elem.orig_height) if elem else (0, 0)
+        if all(res) and all(size):
+            row = layout.row()
+            row.alignment = 'CENTER'
+            row.label(text=f"{size[0]}x{size[1]} > {res[0]}x{res[1]}")
+
 
 def act_strip(context):
     try:

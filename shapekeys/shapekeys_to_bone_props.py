@@ -85,6 +85,7 @@ class DRIV_OT_shapes_to_bone(bpy.types.Operator):
     def add_driver(self, key, bone):
         if key.name not in bone:
             bone[key.name] = key.value
+            bone.id_data.pose.bones.update()
             bone['_RNA_UI'] = bone.get('_RNA_UI', dict())
             bone['_RNA_UI'][key.name] = dict(
                 min=key.slider_min, max=key.slider_max,

@@ -10,7 +10,7 @@ class OBJECT_OT_remove_unused_shapekeys(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, properties):
-        return cls.bl_rna.description
+        return
 
     @classmethod
     def poll(cls, context):

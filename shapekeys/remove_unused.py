@@ -32,8 +32,7 @@ class OBJECT_OT_remove_unused_shapekeys(bpy.types.Operator):
         self.purge(context.object)
         return {'FINISHED'}
 
-    @staticmethod
-    def purge(ob):
+    def purge(self, ob):
         sk = ob.data.shape_keys.key_blocks
 
         active_index = ob.active_shape_key_index
@@ -43,7 +42,7 @@ class OBJECT_OT_remove_unused_shapekeys(bpy.types.Operator):
             basis = {sk[0], key.relative_key}
             for base in basis:
                 for (vert_index, vert) in enumerate(key.data):
-                    if (vert.co != base.data[vert_index].co):
+                    if any(round(abs(x - y), 5) for (x, y) in zip(vert.co, base.data[vert_index].co)):
                         # Shapekey has a change, so keep it
                         break
                 else:
@@ -60,3 +59,7 @@ class OBJECT_OT_remove_unused_shapekeys(bpy.types.Operator):
             bpy.ops.object.shape_key_remove(all=False)
 
         ob.active_shape_key_index = active_index
+        count = len(remove)
+        self.report({'INFO'}, f"Removed {count} unused shapekey{'s' if count != 1 else ''}")
+
+    margin_of_error: bpy.props.FloatProperty(default=0.01)

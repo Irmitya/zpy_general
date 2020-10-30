@@ -10,7 +10,25 @@ class OBJECT_OT_duplicate_shapekey(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, properties):
-        return cls.bl_description
+        txt = cls.bl_description
+
+        if properties.mirror:
+            obj = context.object
+            if obj and obj.active_shape_key:
+                active = obj.active_shape_key
+                sk = utils.flip_name(active.name)
+                vg = utils.flip_name(active.vertex_group)
+
+                if (sk != active.name):
+                    txt += f", and name it {sk}"
+                    if (vg != active.vertex_group):
+                        txt += f" with the vertex group [{vg}]"
+                elif (vg != active.vertex_group):
+                    txt += f", and switch its vertex group with [{vg}]"
+            else:
+                txt += ", and flip it's name and vertex group if it has a Left/Right mirroed name indicators"
+
+        return txt
 
     @classmethod
     def poll(cls, context):
@@ -38,23 +56,24 @@ class OBJECT_OT_duplicate_shapekey(bpy.types.Operator):
         shape = obj.active_shape_key
 
         if self.mirror:
-            mirrored = mirror(shape, 'vertex_group', vg)
-            mirror(shape, 'name', active.name)
+            shape.name = utils.flip_name(active.name)
+            shape.vertex_group = utils.flip_name(vg)
         else:
             shape.vertex_group = vg
             shape.name = active.name
-            mirrored = False
+
         for var in ('interpolation', 'mute', 'relative_key',
                     'slider_max', 'slider_min', 'value'):
             setattr(shape, var, getattr(active, var))
             driver = Get.driver(active, var)
-            if driver:
-                newdriver = utils.copy_driver(driver, shape, var)
-                if mirrored:
-                    for v in newdriver.driver.variables:
-                        for t in v.targets:
-                            mirror(t, 'bone_target', t.bone_target)
+            if not driver:
+                continue
+            newdriver = utils.copy_driver(driver, shape, var)
 
+            if self.mirror:
+                for v in newdriver.driver.variables:
+                    for t in v.targets:
+                        t.bone_target = utils.flip_name(t.bone_target)
 
         # obj.active_shape_key_index = index
         obj.show_only_shape_key = pin
@@ -65,31 +84,3 @@ class OBJECT_OT_duplicate_shapekey(bpy.types.Operator):
         return {'FINISHED'}
 
     mirror: bpy.props.BoolProperty(name='Mirror Shape Key')
-
-
-def mirror(src, attr, default):
-    swaps = {
-        'L.': 'R.', 'l.': 'r.', '.L': '.R', '.l': '.r',
-        'R.': 'L.', 'r.': 'l.', '.R': '.L', '.r': '.l',
-        'LEFT': 'RIGHT', 'Left': 'Right', 'left': 'right',
-        'RIGHT': 'LEFT', 'Right': 'Left', 'right': 'left',
-        '.LEFT': '.RIGHT', '.Left': '.Right', '.left': '.right',
-        '.RIGHT': '.LEFT', '.Right': '.Left', '.right': '.left',
-        'RIGHT.': 'LEFT.', 'Right.': 'Left.', 'right.': 'left.',
-        'LEFT.': 'RIGHT.', 'Left.': 'Right.', 'left.': 'right.',
-    }
-
-    for m in swaps:
-        if default[-len(m):] == m:  # endswith.lr
-            setattr(src, attr, default[:-len(m)] + swaps[m])
-            return 'end'
-        # elif vg[:len(m)].title() == m.title():  # lr.startswith
-        elif default[:-len(m)] == m:  # lr.startswith
-            # name = default[:len(m)]
-            # if m not in (name.upper(), name.title(), name.lower()):
-                # if name == name.lower():
-                    # m = m.lower()
-            setattr(src, attr, swaps[m] + default[-len(m):])
-            return 'start'
-    else:
-        setattr(src, attr, default)

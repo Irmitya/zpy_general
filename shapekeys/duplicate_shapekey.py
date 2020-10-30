@@ -1,5 +1,5 @@
 import bpy
-from zpy import Is, Get, utils
+from zpy import Is, Get, Set, utils
 
 
 class OBJECT_OT_duplicate_shapekey(bpy.types.Operator):
@@ -18,6 +18,10 @@ class OBJECT_OT_duplicate_shapekey(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
+
+        in_edit = (obj.mode == 'EDIT')
+        if in_edit:
+            Set.mode(context, 'OBJECT')
 
         active = obj.active_shape_key
         vg = active.vertex_group
@@ -54,6 +58,9 @@ class OBJECT_OT_duplicate_shapekey(bpy.types.Operator):
 
         # obj.active_shape_key_index = index
         obj.show_only_shape_key = pin
+
+        if in_edit:
+            Set.mode(context, 'EDIT')
 
         return {'FINISHED'}
 
